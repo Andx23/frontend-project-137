@@ -59,7 +59,7 @@ npm run build
 
 ## Demo
 
-El enlace de la aplicación publicada se añadirá después del despliegue en Vercel.
+Aplicación publicada: https://frontend-project-137-mu.vercel.app/
 
 ---
 
