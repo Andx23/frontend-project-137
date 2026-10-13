@@ -2,6 +2,8 @@
 
 [![hexlet-check](https://github.com/Andx23/frontend-project-137/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/Andx23/frontend-project-137/actions)
 
+[![CI](https://github.com/Andx23/frontend-project-137/actions/workflows/ci.yml/badge.svg)](https://github.com/Andx23/frontend-project-137/actions/workflows/ci.yml)
+
 Aplicación web para agregar fuentes RSS y consultar sus publicaciones desde un solo lugar.
 
 Después del tercer proyecto, podrás trabajar con confianza con DOM, Vite, Bootstrap, AJAX, validaciones y desplegar proyectos.
@@ -71,3 +73,4 @@ Las pruebas se ejecutan en cada commit. El archivo `.github/workflows/hexlet-che
 ## Acerca de Códica
 
 [Códica](https://app.codica.la/) es una escuela de programación: programas de aprendizaje propios con práctica, apoyo de mentores y proyectos reales que quedan en tu currículum. Este repositorio es uno de esos proyectos.
+
