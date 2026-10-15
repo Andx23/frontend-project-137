@@ -1,5 +1,15 @@
+
 import { proxy } from 'valtio/vanilla';
 import * as yup from 'yup';
+
+yup.setLocale({
+  mixed: {
+    required: () => 'required',
+  },
+  string: {
+    url: () => 'invalidUrl',
+  },
+});
 
 const state = proxy({
   feeds: [],
@@ -11,8 +21,8 @@ const state = proxy({
 });
 
 const urlSchema = yup.string()
-  .required('No puede estar vac\u00edo')
-  .url('El enlace debe ser una URL v\u00e1lida');
+  .required()
+  .url();
 
 const validateUrl = (url) => urlSchema
   .validate(url)
@@ -20,7 +30,7 @@ const validateUrl = (url) => urlSchema
     const exists = state.feeds.some((feed) => feed.url === validatedUrl);
 
     if (exists) {
-      throw new yup.ValidationError('Este feed ya existe');
+      throw new yup.ValidationError('duplicate');
     }
 
     return validatedUrl;

@@ -1,5 +1,7 @@
+﻿
 import { subscribe } from 'valtio/vanilla';
 import { state, validateUrl, addFeed } from './model.js';
+import { i18next } from './i18n.js';
 
 let validationId = 0;
 
@@ -11,7 +13,9 @@ const render = () => {
   input.value = state.form.input;
   input.classList.toggle('is-invalid', Boolean(state.form.error));
   input.classList.toggle('is-valid', state.form.valid);
-  error.textContent = state.form.error;
+  error.textContent = state.form.error
+    ? i18next.t(`errors.${state.form.error}`)
+    : '';
   button.disabled = !state.form.valid;
 };
 
@@ -19,21 +23,21 @@ const initView = () => {
   document.querySelector('#app').innerHTML = `
     <header class="bg-primary text-white py-4 mb-5">
       <div class="container">
-        <h1 class="display-5">RSS Reader</h1>
-        <p class="lead mb-0">Agrega tus fuentes RSS y consulta sus publicaciones favoritas.</p>
+        <h1 class="display-5">${i18next.t('title')}</h1>
+        <p class="lead mb-0">${i18next.t('description')}</p>
       </div>
     </header>
 
     <section class="container">
       <form id="rss-form" novalidate>
         <div class="mb-3">
-          <label for="rss-url" class="form-label">RSS link</label>
+          <label for="rss-url" class="form-label">${i18next.t('form.label')}</label>
           <input
             id="rss-url"
             name="url"
             type="text"
             class="form-control"
-            placeholder="https://example.com/feed.xml"
+            placeholder="${i18next.t('form.placeholder')}"
             aria-describedby="rss-error"
             required
           >
@@ -41,7 +45,7 @@ const initView = () => {
         </div>
 
         <button id="rss-submit" type="submit" class="btn btn-primary" disabled>
-          A\u00f1adir
+          ${i18next.t('form.submit')}
         </button>
       </form>
     </section>
@@ -108,3 +112,4 @@ const initView = () => {
 };
 
 export default initView;
+

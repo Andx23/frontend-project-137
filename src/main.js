@@ -1,4 +1,7 @@
 ﻿import './style.css';
+import { i18nReady } from './i18n.js';
 import initView from './view.js';
 
-initView();
+i18nReady.then(() => {
+  initView();
+});
