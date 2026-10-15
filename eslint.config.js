@@ -1,4 +1,5 @@
-﻿import js from '@eslint/js';
+﻿
+import js from '@eslint/js';
 
 export default [
   {
@@ -14,6 +15,9 @@ export default [
         document: 'readonly',
         window: 'readonly',
         console: 'readonly',
+        crypto: 'readonly',
+        DOMParser: 'readonly',
+        URL: 'readonly',
       },
     },
   },

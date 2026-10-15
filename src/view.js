@@ -5,18 +5,81 @@ import { i18next } from './i18n.js';
 
 let validationId = 0;
 
+const renderList = (container, items, createItem) => {
+  container.replaceChildren();
+
+  items.forEach((item) => {
+    container.append(createItem(item));
+  });
+};
+
 const render = () => {
   const input = document.querySelector('#rss-url');
   const error = document.querySelector('#rss-error');
   const button = document.querySelector('#rss-submit');
+  const loading = document.querySelector('#rss-loading');
+  const loadingError = document.querySelector('#rss-load-error');
+  const feedsList = document.querySelector('#feeds-list');
+  const postsList = document.querySelector('#posts-list');
 
   input.value = state.form.input;
+  input.disabled = state.loading;
   input.classList.toggle('is-invalid', Boolean(state.form.error));
   input.classList.toggle('is-valid', state.form.valid);
+
   error.textContent = state.form.error
     ? i18next.t(`errors.${state.form.error}`)
     : '';
-  button.disabled = !state.form.valid;
+
+  button.disabled = !state.form.valid || state.loading;
+  button.textContent = state.loading
+    ? i18next.t('loading')
+    : i18next.t('form.submit');
+
+  loading.textContent = state.loading
+    ? i18next.t('loading')
+    : '';
+
+  loadingError.textContent = state.loadingError
+    ? i18next.t(`errors.${state.loadingError}`)
+    : '';
+
+  renderList(feedsList, state.feeds, (feed) => {
+    const item = document.createElement('li');
+    const title = document.createElement('h3');
+    const description = document.createElement('p');
+
+    title.textContent = feed.title;
+    description.textContent = feed.description;
+
+    item.append(title, description);
+
+    return item;
+  });
+
+  renderList(postsList, state.posts, (post) => {
+    const item = document.createElement('li');
+    const link = document.createElement('a');
+
+    link.textContent = post.title;
+
+    try {
+      const postUrl = new URL(post.link);
+
+      if (postUrl.protocol === 'http:' || postUrl.protocol === 'https:') {
+        link.href = postUrl.href;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        item.append(link);
+      } else {
+        item.textContent = post.title;
+      }
+    } catch {
+      item.textContent = post.title;
+    }
+
+    return item;
+  });
 };
 
 const initView = () => {
@@ -47,7 +110,20 @@ const initView = () => {
         <button id="rss-submit" type="submit" class="btn btn-primary" disabled>
           ${i18next.t('form.submit')}
         </button>
+
+        <p id="rss-loading" role="status" aria-live="polite"></p>
+        <p id="rss-load-error" class="text-danger" role="alert"></p>
       </form>
+
+      <section class="mt-5">
+        <h2>${i18next.t('feeds')}</h2>
+        <ul id="feeds-list"></ul>
+      </section>
+
+      <section class="mt-5">
+        <h2>${i18next.t('posts')}</h2>
+        <ul id="posts-list"></ul>
+      </section>
     </section>
   `;
 
@@ -60,6 +136,8 @@ const initView = () => {
     state.form.input = event.target.value;
     state.form.error = '';
     state.form.valid = false;
+    state.loadingError = '';
+
     render();
 
     validateUrl(state.form.input)
@@ -83,25 +161,36 @@ const initView = () => {
 
   form.addEventListener('submit', (event) => {
     event.preventDefault();
+
+    if (state.loading) {
+      return;
+    }
+
     const currentValidationId = ++validationId;
 
     validateUrl(state.form.input)
       .then((url) => {
         if (currentValidationId !== validationId) {
-          return;
+          return null;
         }
 
-        addFeed(url);
-        input.focus();
-        render();
+        return addFeed(url);
       })
-      .catch((validationError) => {
+      .catch((submitError) => {
         if (currentValidationId !== validationId) {
           return;
         }
 
-        state.form.error = validationError.message;
-        state.form.valid = false;
+        if (submitError.name === 'ValidationError') {
+          state.form.error = submitError.message;
+          state.form.valid = false;
+        }
+      })
+      .finally(() => {
+        if (currentValidationId !== validationId) {
+          return;
+        }
+
         render();
         input.focus();
       });
@@ -112,4 +201,3 @@ const initView = () => {
 };
 
 export default initView;
-

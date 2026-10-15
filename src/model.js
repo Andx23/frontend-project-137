@@ -1,6 +1,8 @@
 
 import { proxy } from 'valtio/vanilla';
 import * as yup from 'yup';
+import fetchRss from './api.js';
+import parseRss from './parser.js';
 
 yup.setLocale({
   mixed: {
@@ -13,11 +15,14 @@ yup.setLocale({
 
 const state = proxy({
   feeds: [],
+  posts: [],
   form: {
     input: '',
     error: '',
     valid: false,
   },
+  loading: false,
+  loadingError: '',
 });
 
 const urlSchema = yup.string()
@@ -37,10 +42,44 @@ const validateUrl = (url) => urlSchema
   });
 
 const addFeed = (url) => {
-  state.feeds.push({ url });
-  state.form.input = '';
-  state.form.error = '';
-  state.form.valid = false;
+  state.loading = true;
+  state.loadingError = '';
+
+  return fetchRss(url)
+    .then((xmlText) => parseRss(xmlText))
+    .then((parsedFeed) => {
+      const feedId = crypto.randomUUID();
+
+      const feed = {
+        id: feedId,
+        url,
+        title: parsedFeed.title,
+        description: parsedFeed.description,
+      };
+
+      const posts = parsedFeed.posts.map((post) => ({
+        id: crypto.randomUUID(),
+        feedId,
+        title: post.title,
+        link: post.link,
+      }));
+
+      state.feeds.push(feed);
+      state.posts.push(...posts);
+      state.form.input = '';
+      state.form.error = '';
+      state.form.valid = false;
+    })
+    .catch((error) => {
+      state.loadingError = error.message === 'parseError'
+        ? 'parseError'
+        : 'networkError';
+
+      throw error;
+    })
+    .finally(() => {
+      state.loading = false;
+    });
 };
 
 export { state, validateUrl, addFeed };
