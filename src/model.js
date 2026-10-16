@@ -4,6 +4,8 @@ import * as yup from 'yup';
 import fetchRss from './api.js';
 import parseRss from './parser.js';
 
+const UPDATE_INTERVAL = 5000;
+
 yup.setLocale({
   mixed: {
     required: () => 'required',
@@ -41,6 +43,49 @@ const validateUrl = (url) => urlSchema
     return validatedUrl;
   });
 
+const addNewPosts = (feed, parsedFeed) => {
+  const existingLinks = new Set(
+    state.posts
+      .filter((post) => post.feedId === feed.id)
+      .map((post) => post.link),
+  );
+
+  const newPosts = parsedFeed.posts
+    .filter((post) => {
+      if (existingLinks.has(post.link)) {
+        return false;
+      }
+
+      existingLinks.add(post.link);
+      return true;
+    })
+    .map((post) => ({
+      id: crypto.randomUUID(),
+      feedId: feed.id,
+      title: post.title,
+      link: post.link,
+    }));
+
+  state.posts.push(...newPosts);
+};
+
+const scheduleFeedUpdate = (feed) => {
+  window.setTimeout(() => {
+    fetchRss(feed.url)
+      .then((xmlText) => parseRss(xmlText))
+      .then((parsedFeed) => {
+        addNewPosts(feed, parsedFeed);
+      })
+      .catch(() => {
+        // Si falla una comprobación, se conservan los posts existentes.
+        // La siguiente comprobación se intentará después.
+      })
+      .finally(() => {
+        scheduleFeedUpdate(feed);
+      });
+  }, UPDATE_INTERVAL);
+};
+
 const addFeed = (url) => {
   state.loading = true;
   state.loadingError = '';
@@ -57,18 +102,14 @@ const addFeed = (url) => {
         description: parsedFeed.description,
       };
 
-      const posts = parsedFeed.posts.map((post) => ({
-        id: crypto.randomUUID(),
-        feedId,
-        title: post.title,
-        link: post.link,
-      }));
-
       state.feeds.push(feed);
-      state.posts.push(...posts);
+      addNewPosts(feed, parsedFeed);
+
       state.form.input = '';
       state.form.error = '';
       state.form.valid = false;
+
+      scheduleFeedUpdate(feed);
     })
     .catch((error) => {
       state.loadingError = error.message === 'parseError'
