@@ -6,6 +6,7 @@ const fetchRss = (url) => axios
     params: {
       url,
       disableCache: true,
+      cacheBust: Date.now(),
     },
     headers: {
       'Cache-Control': 'no-cache',
