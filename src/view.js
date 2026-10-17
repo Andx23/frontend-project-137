@@ -152,6 +152,7 @@ const initView = () => {
             type="text"
             class="form-control"
             placeholder="${i18next.t('form.placeholder')}"
+            aria-label="url"
             aria-describedby="rss-error"
             required
           >
@@ -302,3 +303,5 @@ const initView = () => {
 };
 
 export default initView;
+
+
