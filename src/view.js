@@ -50,7 +50,7 @@ const initView = () => {
       ? i18next.t(`errors.${state.form.error}`)
       : '';
 
-    button.disabled = !state.form.valid || state.loading;
+    button.disabled = state.loading;
     button.textContent = state.loading
       ? i18next.t('loading')
       : i18next.t('form.submit');
@@ -84,7 +84,7 @@ const initView = () => {
       const link = document.createElement('a');
 
       link.href = isSafeUrl(post.link) ? new URL(post.link).href : '#';
-      link.className = post.read ? 'fw-normal' : 'fw-bold';
+      link.className = post.read ? 'link-secondary' : 'fw-bold';
       link.textContent = post.title;
 
       if (isSafeUrl(post.link)) {
@@ -149,7 +149,7 @@ const initView = () => {
           <div id="rss-error" class="invalid-feedback"></div>
         </div>
 
-        <button id="rss-submit" type="submit" class="btn btn-primary" disabled>
+        <button id="rss-submit" type="submit" class="btn btn-primary">
           ${i18next.t('form.submit')}
         </button>
 
@@ -170,7 +170,7 @@ const initView = () => {
 
     <div
       class="modal fade"
-      id="post-preview-modal"
+      id="modal"
       tabindex="-1"
       aria-labelledby="post-preview-title"
       aria-hidden="true"
@@ -212,7 +212,7 @@ const initView = () => {
 
   const form = document.querySelector('#rss-form');
   const input = document.querySelector('#rss-url');
-  const modalElement = document.querySelector('#post-preview-modal');
+  const modalElement = document.querySelector('#modal');
 
   previewModal = new Modal(modalElement);
 

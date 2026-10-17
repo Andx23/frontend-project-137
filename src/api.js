@@ -8,11 +8,21 @@ const fetchRss = (url) => axios
     },
   })
   .then((response) => {
-    if (!response.data || typeof response.data.contents !== 'string') {
-      throw new Error('networkError');
+    let data = response.data;
+
+    if (typeof data === 'string') {
+      try {
+        data = JSON.parse(data);
+      } catch {
+        return data;
+      }
     }
 
-    return response.data.contents;
+    if (typeof data?.contents === 'string') {
+      return data.contents;
+    }
+
+    throw new Error('networkError');
   });
 
 export default fetchRss;
