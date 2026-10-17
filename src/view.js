@@ -1,5 +1,4 @@
-﻿
-import { Modal } from 'bootstrap';
+﻿import { Modal } from 'bootstrap';
 import { subscribe } from 'valtio/vanilla';
 import createModel from './model.js';
 import { i18next } from './i18n.js';
@@ -18,10 +17,7 @@ const initView = () => {
 
   const renderList = (container, items, createItem) => {
     container.replaceChildren();
-
-    items.forEach((item) => {
-      container.append(createItem(item));
-    });
+    items.forEach((item) => container.append(createItem(item)));
   };
 
   const isSafeUrl = (url) => {
@@ -38,8 +34,7 @@ const initView = () => {
     const error = document.querySelector('#rss-error');
     const button = document.querySelector('#rss-submit');
     const loading = document.querySelector('#rss-loading');
-    const loadingError = document.querySelector('#rss-load-error');
-    const successMessage = document.querySelector('#rss-success');
+    const feedback = document.querySelector('.feedback');
     const feedsList = document.querySelector('#feeds-list');
     const postsList = document.querySelector('#posts-list');
     const previewTitle = document.querySelector('#post-preview-title');
@@ -62,13 +57,14 @@ const initView = () => {
 
     loading.textContent = state.loading ? i18next.t('loading') : '';
 
-    loadingError.textContent = state.loadingError
+    feedback.textContent = state.loadingError
       ? i18next.t(`errors.${state.loadingError}`)
-      : '';
+      : state.successMessage
+        ? i18next.t(state.successMessage)
+        : '';
 
-    successMessage.textContent = state.successMessage
-      ? i18next.t(state.successMessage)
-      : '';
+    feedback.classList.toggle('text-danger', Boolean(state.loadingError));
+    feedback.classList.toggle('text-success', Boolean(state.successMessage));
 
     renderList(feedsList, state.feeds, (feed) => {
       const item = document.createElement('li');
@@ -84,23 +80,18 @@ const initView = () => {
 
     renderList(postsList, state.posts, (post) => {
       const item = document.createElement('li');
-      const title = document.createElement('span');
       const previewButton = document.createElement('button');
+      const link = document.createElement('a');
 
-      title.textContent = post.title;
-      title.classList.add(post.read ? 'fw-normal' : 'fw-bold');
+      link.href = isSafeUrl(post.link) ? new URL(post.link).href : '#';
+      link.className = post.read ? 'fw-normal' : 'fw-bold';
+      link.textContent = post.title;
 
       if (isSafeUrl(post.link)) {
-        const link = document.createElement('a');
-
-        link.href = new URL(post.link).href;
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
-        link.className = post.read ? 'fw-normal' : 'fw-bold';
-        link.textContent = post.title;
-        item.append(link);
       } else {
-        item.append(title);
+        link.removeAttribute('href');
       }
 
       previewButton.type = 'button';
@@ -112,8 +103,7 @@ const initView = () => {
         previewModal.show();
       });
 
-      item.append(previewButton);
-
+      item.append(link, previewButton);
       return item;
     });
 
@@ -164,16 +154,15 @@ const initView = () => {
         </button>
 
         <p id="rss-loading" role="status" aria-live="polite"></p>
-        <p id="rss-load-error" class="text-danger" role="alert"></p>
-        <p id="rss-success" class="text-success" role="status" aria-live="polite"></p>
+        <p class="feedback" role="status" aria-live="polite"></p>
       </form>
 
-      <section class="mt-5">
+      <section class="feeds mt-5">
         <h2>${i18next.t('feeds')}</h2>
         <ul id="feeds-list"></ul>
       </section>
 
-      <section class="mt-5">
+      <section class="posts mt-5">
         <h2>${i18next.t('posts')}</h2>
         <ul id="posts-list"></ul>
       </section>
@@ -197,7 +186,7 @@ const initView = () => {
               aria-label="${i18next.t('preview.close')}"
             ></button>
           </div>
-          <div class="modal-body" id="post-preview-description">${i18next.t('preview.description')}</div>
+          <div class="modal-body" id="post-preview-description"></div>
           <div class="modal-footer">
             <button
               type="button"
@@ -240,8 +229,6 @@ const initView = () => {
     state.loadingError = '';
     state.successMessage = '';
 
-    render();
-
     validateUrl(state.form.input)
       .then(() => {
         if (currentValidationId !== validationId) {
@@ -257,7 +244,11 @@ const initView = () => {
         }
 
         state.form.valid = false;
-        state.form.error = validationError.message;
+        state.form.error = validationError.message === 'duplicate'
+          ? 'duplicate'
+          : validationError.message === 'required'
+            ? 'required'
+            : 'invalidUrl';
       });
   });
 
@@ -284,17 +275,18 @@ const initView = () => {
         }
 
         if (submitError.name === 'ValidationError') {
-          state.form.error = submitError.message;
+          state.form.error = submitError.message === 'duplicate'
+            ? 'duplicate'
+            : submitError.message === 'required'
+              ? 'required'
+              : 'invalidUrl';
           state.form.valid = false;
         }
       })
       .finally(() => {
-        if (currentValidationId !== validationId) {
-          return;
+        if (currentValidationId === validationId) {
+          input.focus();
         }
-
-        render();
-        input.focus();
       });
   });
 
@@ -303,5 +295,3 @@ const initView = () => {
 };
 
 export default initView;
-
-
