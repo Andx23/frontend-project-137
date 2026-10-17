@@ -1,4 +1,5 @@
 ﻿
+
 import { proxy } from 'valtio/vanilla';
 import * as yup from 'yup';
 import fetchRss from './api.js';
@@ -92,7 +93,7 @@ const createModel = () => {
   };
 
   const scheduleFeedUpdate = (feed) => {
-    window.setTimeout(() => {
+    setTimeout(() => {
       fetchRss(feed.url)
         .then((feedData) => parseRss(feedData))
         .then((parsedFeed) => {

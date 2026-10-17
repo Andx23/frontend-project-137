@@ -18,6 +18,7 @@ export default [
         crypto: 'readonly',
         DOMParser: 'readonly',
         URL: 'readonly',
+        setTimeout: 'readonly',
       },
     },
   },
