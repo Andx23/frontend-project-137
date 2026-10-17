@@ -1,5 +1,4 @@
-﻿
-const resources = {
+﻿const resources = {
   translation: {
     title: 'RSS Reader',
     description: 'Agrega tus fuentes RSS y consulta sus publicaciones favoritas.',
@@ -11,15 +10,21 @@ const resources = {
     errors: {
       required: 'No puede estar vacío',
       invalidUrl: 'El enlace debe ser una URL válida',
-      duplicate: 'Este feed ya existe',
-      parseError: 'No se pudo interpretar el contenido del feed RSS. Verifica que el enlace corresponda a un feed válido.',
-      networkError: 'No se pudo descargar el feed. Comprueba tu conexión e inténtalo de nuevo.',
+      duplicate: 'El RSS ya existe',
+      parseError: 'El recurso no contiene un RSS válido',
+      networkError: 'Error de red',
     },
     loading: 'Cargando feed...',
+    success: 'RSS cargado correctamente',
     feeds: 'Feeds',
     posts: 'Posts',
+    preview: {
+      description: 'Objetivo: aprender a extraer del árbol los datos necesarios',
+      close: 'Cerrar',
+      readMore: 'Leer completo',
+      button: 'Vista previa',
+    },
   },
 };
 
 export default resources;
-

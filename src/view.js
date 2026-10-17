@@ -1,130 +1,139 @@
-﻿import { Modal } from 'bootstrap';
+﻿
+import { Modal } from 'bootstrap';
 import { subscribe } from 'valtio/vanilla';
-import {
-  state,
-  validateUrl,
-  addFeed,
-  selectPost,
-  closePostPreview,
-} from './model.js';
+import createModel from './model.js';
 import { i18next } from './i18n.js';
 
-let validationId = 0;
-let previewModal;
+const initView = () => {
+  const {
+    state,
+    validateUrl,
+    addFeed,
+    selectPost,
+    closePostPreview,
+  } = createModel();
 
-const renderList = (container, items, createItem) => {
-  container.replaceChildren();
+  let validationId = 0;
+  let previewModal;
 
-  items.forEach((item) => {
-    container.append(createItem(item));
-  });
-};
+  const renderList = (container, items, createItem) => {
+    container.replaceChildren();
 
-const isSafeUrl = (url) => {
-  try {
-    const parsedUrl = new URL(url);
-    return parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:';
-  } catch {
-    return false;
-  }
-};
+    items.forEach((item) => {
+      container.append(createItem(item));
+    });
+  };
 
-const render = () => {
-  const input = document.querySelector('#rss-url');
-  const error = document.querySelector('#rss-error');
-  const button = document.querySelector('#rss-submit');
-  const loading = document.querySelector('#rss-loading');
-  const loadingError = document.querySelector('#rss-load-error');
-  const feedsList = document.querySelector('#feeds-list');
-  const postsList = document.querySelector('#posts-list');
-  const previewTitle = document.querySelector('#post-preview-title');
-  const previewDescription = document.querySelector('#post-preview-description');
-  const previewLink = document.querySelector('#post-preview-link');
-
-  input.value = state.form.input;
-  input.disabled = state.loading;
-  input.classList.toggle('is-invalid', Boolean(state.form.error));
-  input.classList.toggle('is-valid', state.form.valid);
-
-  error.textContent = state.form.error
-    ? i18next.t(`errors.${state.form.error}`)
-    : '';
-
-  button.disabled = !state.form.valid || state.loading;
-  button.textContent = state.loading
-    ? i18next.t('loading')
-    : i18next.t('form.submit');
-
-  loading.textContent = state.loading ? i18next.t('loading') : '';
-
-  loadingError.textContent = state.loadingError
-    ? i18next.t(`errors.${state.loadingError}`)
-    : '';
-
-  renderList(feedsList, state.feeds, (feed) => {
-    const item = document.createElement('li');
-    const title = document.createElement('h3');
-    const description = document.createElement('p');
-
-    title.textContent = feed.title;
-    description.textContent = feed.description;
-    item.append(title, description);
-
-    return item;
-  });
-
-  renderList(postsList, state.posts, (post) => {
-    const item = document.createElement('li');
-    const title = document.createElement('span');
-    const previewButton = document.createElement('button');
-
-    title.textContent = post.title;
-    title.classList.add(post.read ? 'fw-normal' : 'fw-bold');
-
-    if (isSafeUrl(post.link)) {
-      const link = document.createElement('a');
-
-      link.href = new URL(post.link).href;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      link.className = post.read ? 'fw-normal' : 'fw-bold';
-      link.textContent = post.title;
-      item.append(link);
-    } else {
-      item.append(title);
+  const isSafeUrl = (url) => {
+    try {
+      const parsedUrl = new URL(url);
+      return parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:';
+    } catch {
+      return false;
     }
+  };
 
-    previewButton.type = 'button';
-    previewButton.className = 'btn btn-outline-primary btn-sm ms-2';
-    previewButton.textContent = 'Vista previa';
+  const render = () => {
+    const input = document.querySelector('#rss-url');
+    const error = document.querySelector('#rss-error');
+    const button = document.querySelector('#rss-submit');
+    const loading = document.querySelector('#rss-loading');
+    const loadingError = document.querySelector('#rss-load-error');
+    const successMessage = document.querySelector('#rss-success');
+    const feedsList = document.querySelector('#feeds-list');
+    const postsList = document.querySelector('#posts-list');
+    const previewTitle = document.querySelector('#post-preview-title');
+    const previewDescription = document.querySelector('#post-preview-description');
+    const previewLink = document.querySelector('#post-preview-link');
 
-    previewButton.addEventListener('click', () => {
-      selectPost(post.id);
-      previewModal.show();
+    input.value = state.form.input;
+    input.disabled = state.loading;
+    input.classList.toggle('is-invalid', Boolean(state.form.error));
+    input.classList.toggle('is-valid', state.form.valid);
+
+    error.textContent = state.form.error
+      ? i18next.t(`errors.${state.form.error}`)
+      : '';
+
+    button.disabled = !state.form.valid || state.loading;
+    button.textContent = state.loading
+      ? i18next.t('loading')
+      : i18next.t('form.submit');
+
+    loading.textContent = state.loading ? i18next.t('loading') : '';
+
+    loadingError.textContent = state.loadingError
+      ? i18next.t(`errors.${state.loadingError}`)
+      : '';
+
+    successMessage.textContent = state.successMessage
+      ? i18next.t(state.successMessage)
+      : '';
+
+    renderList(feedsList, state.feeds, (feed) => {
+      const item = document.createElement('li');
+      const title = document.createElement('h3');
+      const description = document.createElement('p');
+
+      title.textContent = feed.title;
+      description.textContent = feed.description;
+      item.append(title, description);
+
+      return item;
     });
 
-    item.append(previewButton);
+    renderList(postsList, state.posts, (post) => {
+      const item = document.createElement('li');
+      const title = document.createElement('span');
+      const previewButton = document.createElement('button');
 
-    return item;
-  });
+      title.textContent = post.title;
+      title.classList.add(post.read ? 'fw-normal' : 'fw-bold');
 
-  const selectedPost = state.selectedPost;
+      if (isSafeUrl(post.link)) {
+        const link = document.createElement('a');
 
-  previewTitle.textContent = selectedPost?.title || '';
-  previewDescription.textContent = selectedPost?.description || '';
+        link.href = new URL(post.link).href;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.className = post.read ? 'fw-normal' : 'fw-bold';
+        link.textContent = post.title;
+        item.append(link);
+      } else {
+        item.append(title);
+      }
 
-  if (selectedPost && isSafeUrl(selectedPost.link)) {
-    previewLink.href = new URL(selectedPost.link).href;
-    previewLink.classList.remove('disabled');
-    previewLink.removeAttribute('aria-disabled');
-  } else {
-    previewLink.removeAttribute('href');
-    previewLink.classList.add('disabled');
-    previewLink.setAttribute('aria-disabled', 'true');
-  }
-};
+      previewButton.type = 'button';
+      previewButton.className = 'btn btn-outline-primary btn-sm ms-2';
+      previewButton.textContent = i18next.t('preview.button');
 
-const initView = () => {
+      previewButton.addEventListener('click', () => {
+        selectPost(post.id);
+        previewModal.show();
+      });
+
+      item.append(previewButton);
+
+      return item;
+    });
+
+    const selectedPost = state.selectedPost;
+
+    previewTitle.textContent = selectedPost?.title || '';
+    previewDescription.textContent = selectedPost?.description
+      || i18next.t('preview.description');
+
+    if (selectedPost && isSafeUrl(selectedPost.link)) {
+      previewLink.href = new URL(selectedPost.link).href;
+      previewLink.classList.remove('disabled');
+      previewLink.removeAttribute('aria-disabled');
+    } else {
+      previewLink.removeAttribute('href');
+      previewLink.classList.add('disabled');
+      previewLink.setAttribute('aria-disabled', 'true');
+    }
+  };
+
   document.querySelector('#app').innerHTML = `
     <header class="bg-primary text-white py-4 mb-5">
       <div class="container">
@@ -155,6 +164,7 @@ const initView = () => {
 
         <p id="rss-loading" role="status" aria-live="polite"></p>
         <p id="rss-load-error" class="text-danger" role="alert"></p>
+        <p id="rss-success" class="text-success" role="status" aria-live="polite"></p>
       </form>
 
       <section class="mt-5">
@@ -183,17 +193,17 @@ const initView = () => {
               type="button"
               class="btn-close"
               data-bs-dismiss="modal"
-              aria-label="Cerrar"
+              aria-label="${i18next.t('preview.close')}"
             ></button>
           </div>
-          <div class="modal-body" id="post-preview-description"></div>
+          <div class="modal-body" id="post-preview-description">${i18next.t('preview.description')}</div>
           <div class="modal-footer">
             <button
               type="button"
               class="btn btn-secondary"
               data-bs-dismiss="modal"
             >
-              Cerrar
+              ${i18next.t('preview.close')}
             </button>
             <a
               id="post-preview-link"
@@ -202,7 +212,7 @@ const initView = () => {
               rel="noopener noreferrer"
               aria-disabled="true"
             >
-              Leer completo
+              ${i18next.t('preview.readMore')}
             </a>
           </div>
         </div>
@@ -227,6 +237,7 @@ const initView = () => {
     state.form.error = '';
     state.form.valid = false;
     state.loadingError = '';
+    state.successMessage = '';
 
     render();
 

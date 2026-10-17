@@ -2,10 +2,10 @@
 import resources from './locales/es.js';
 
 const i18nReady = i18next.init({
-  lng: 'es',
-  fallbackLng: 'es',
+  lng: 'ru',
+  fallbackLng: 'ru',
   resources: {
-    es: resources,
+    ru: resources,
   },
 });
 
