@@ -18,6 +18,7 @@ yup.setLocale({
 const state = proxy({
   feeds: [],
   posts: [],
+  selectedPost: null,
   form: {
     input: '',
     error: '',
@@ -63,10 +64,27 @@ const addNewPosts = (feed, parsedFeed) => {
       id: crypto.randomUUID(),
       feedId: feed.id,
       title: post.title,
+      description: post.description || '',
       link: post.link,
+      read: false,
     }));
 
   state.posts.push(...newPosts);
+};
+
+const selectPost = (postId) => {
+  const post = state.posts.find((item) => item.id === postId);
+
+  if (!post) {
+    return;
+  }
+
+  post.read = true;
+  state.selectedPost = post;
+};
+
+const closePostPreview = () => {
+  state.selectedPost = null;
 };
 
 const scheduleFeedUpdate = (feed) => {
@@ -123,4 +141,10 @@ const addFeed = (url) => {
     });
 };
 
-export { state, validateUrl, addFeed };
+export {
+  state,
+  validateUrl,
+  addFeed,
+  selectPost,
+  closePostPreview,
+};

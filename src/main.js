@@ -1,4 +1,5 @@
-﻿import './style.css';
+﻿import 'bootstrap';
+import './style.css';
 import { i18nReady } from './i18n.js';
 import initView from './view.js';
 

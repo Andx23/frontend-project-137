@@ -1,9 +1,16 @@
-﻿
+﻿import { Modal } from 'bootstrap';
 import { subscribe } from 'valtio/vanilla';
-import { state, validateUrl, addFeed } from './model.js';
+import {
+  state,
+  validateUrl,
+  addFeed,
+  selectPost,
+  closePostPreview,
+} from './model.js';
 import { i18next } from './i18n.js';
 
 let validationId = 0;
+let previewModal;
 
 const renderList = (container, items, createItem) => {
   container.replaceChildren();
@@ -11,6 +18,15 @@ const renderList = (container, items, createItem) => {
   items.forEach((item) => {
     container.append(createItem(item));
   });
+};
+
+const isSafeUrl = (url) => {
+  try {
+    const parsedUrl = new URL(url);
+    return parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:';
+  } catch {
+    return false;
+  }
 };
 
 const render = () => {
@@ -21,6 +37,9 @@ const render = () => {
   const loadingError = document.querySelector('#rss-load-error');
   const feedsList = document.querySelector('#feeds-list');
   const postsList = document.querySelector('#posts-list');
+  const previewTitle = document.querySelector('#post-preview-title');
+  const previewDescription = document.querySelector('#post-preview-description');
+  const previewLink = document.querySelector('#post-preview-link');
 
   input.value = state.form.input;
   input.disabled = state.loading;
@@ -36,9 +55,7 @@ const render = () => {
     ? i18next.t('loading')
     : i18next.t('form.submit');
 
-  loading.textContent = state.loading
-    ? i18next.t('loading')
-    : '';
+  loading.textContent = state.loading ? i18next.t('loading') : '';
 
   loadingError.textContent = state.loadingError
     ? i18next.t(`errors.${state.loadingError}`)
@@ -51,7 +68,6 @@ const render = () => {
 
     title.textContent = feed.title;
     description.textContent = feed.description;
-
     item.append(title, description);
 
     return item;
@@ -59,27 +75,53 @@ const render = () => {
 
   renderList(postsList, state.posts, (post) => {
     const item = document.createElement('li');
-    const link = document.createElement('a');
+    const title = document.createElement('span');
+    const previewButton = document.createElement('button');
 
-    link.textContent = post.title;
+    title.textContent = post.title;
+    title.classList.add(post.read ? 'fw-normal' : 'fw-bold');
 
-    try {
-      const postUrl = new URL(post.link);
+    if (isSafeUrl(post.link)) {
+      const link = document.createElement('a');
 
-      if (postUrl.protocol === 'http:' || postUrl.protocol === 'https:') {
-        link.href = postUrl.href;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        item.append(link);
-      } else {
-        item.textContent = post.title;
-      }
-    } catch {
-      item.textContent = post.title;
+      link.href = new URL(post.link).href;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.className = post.read ? 'fw-normal' : 'fw-bold';
+      link.textContent = post.title;
+      item.append(link);
+    } else {
+      item.append(title);
     }
+
+    previewButton.type = 'button';
+    previewButton.className = 'btn btn-outline-primary btn-sm ms-2';
+    previewButton.textContent = 'Vista previa';
+
+    previewButton.addEventListener('click', () => {
+      selectPost(post.id);
+      previewModal.show();
+    });
+
+    item.append(previewButton);
 
     return item;
   });
+
+  const selectedPost = state.selectedPost;
+
+  previewTitle.textContent = selectedPost?.title || '';
+  previewDescription.textContent = selectedPost?.description || '';
+
+  if (selectedPost && isSafeUrl(selectedPost.link)) {
+    previewLink.href = new URL(selectedPost.link).href;
+    previewLink.classList.remove('disabled');
+    previewLink.removeAttribute('aria-disabled');
+  } else {
+    previewLink.removeAttribute('href');
+    previewLink.classList.add('disabled');
+    previewLink.setAttribute('aria-disabled', 'true');
+  }
 };
 
 const initView = () => {
@@ -125,10 +167,58 @@ const initView = () => {
         <ul id="posts-list"></ul>
       </section>
     </section>
+
+    <div
+      class="modal fade"
+      id="post-preview-modal"
+      tabindex="-1"
+      aria-labelledby="post-preview-title"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="post-preview-title"></h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Cerrar"
+            ></button>
+          </div>
+          <div class="modal-body" id="post-preview-description"></div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Cerrar
+            </button>
+            <a
+              id="post-preview-link"
+              class="btn btn-primary disabled"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-disabled="true"
+            >
+              Leer completo
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
   `;
 
   const form = document.querySelector('#rss-form');
   const input = document.querySelector('#rss-url');
+  const modalElement = document.querySelector('#post-preview-modal');
+
+  previewModal = new Modal(modalElement);
+
+  modalElement.addEventListener('hidden.bs.modal', () => {
+    closePostPreview();
+  });
 
   input.addEventListener('input', (event) => {
     const currentValidationId = ++validationId;
