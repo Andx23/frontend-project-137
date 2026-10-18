@@ -7,6 +7,17 @@ import parseRss from './parser.js';
 
 const UPDATE_INTERVAL = 5000;
 
+const createId = () => {
+  if (
+    typeof crypto !== 'undefined'
+    && typeof crypto.randomUUID === 'function'
+  ) {
+    return crypto.randomUUID();
+  }
+
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+};
+
 yup.setLocale({
   mixed: {
     required: () => 'required',
@@ -66,7 +77,7 @@ const createModel = () => {
         return true;
       })
       .map((post) => ({
-        id: crypto.randomUUID(),
+        id: createId(),
         feedId: feed.id,
         title: post.title,
         description: post.description || '',
@@ -116,7 +127,7 @@ const createModel = () => {
     return fetchRss(url)
       .then((feedData) => parseRss(feedData))
       .then((parsedFeed) => {
-        const feedId = crypto.randomUUID();
+        const feedId = createId();
 
         const feed = {
           id: feedId,
