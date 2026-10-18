@@ -9,15 +9,7 @@ const fetchRss = (url) => axios
     },
   })
   .then((response) => {
-    let { data } = response;
-
-    if (typeof data === 'string') {
-      try {
-        data = JSON.parse(data);
-      } catch {
-        return data;
-      }
-    }
+    const { data } = response;
 
     if (typeof data?.contents === 'string') {
       return data.contents;
