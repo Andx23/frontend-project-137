@@ -1,4 +1,5 @@
-﻿import axios from 'axios';
+﻿
+import axios from 'axios';
 
 const fetchRss = (url) => axios
   .get('https://allorigins.hexlet.app/get', {
@@ -6,18 +7,9 @@ const fetchRss = (url) => axios
       url,
       disableCache: true,
     },
-    responseType: 'text',
   })
   .then((response) => {
-    let data = response.data;
-
-    if (typeof data === 'string') {
-      try {
-        data = JSON.parse(data);
-      } catch {
-        return data;
-      }
-    }
+    const { data } = response;
 
     if (typeof data?.contents === 'string') {
       return data.contents;
