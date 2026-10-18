@@ -57,14 +57,16 @@ const initView = () => {
 
     loading.textContent = state.loading ? i18next.t('loading') : '';
 
-    feedback.textContent = state.loadingError
-      ? i18next.t(`errors.${state.loadingError}`)
+    const feedbackError = state.loadingError || state.form.error;
+
+    feedback.textContent = feedbackError
+      ? i18next.t(`errors.${feedbackError}`)
       : state.successMessage
         ? i18next.t(state.successMessage)
         : '';
 
-    feedback.classList.toggle('text-danger', Boolean(state.loadingError));
-    feedback.classList.toggle('text-success', Boolean(state.successMessage));
+    feedback.classList.toggle('text-danger', Boolean(feedbackError));
+    feedback.classList.toggle('text-success', Boolean(state.successMessage) && !feedbackError);
 
     renderList(feedsList, state.feeds, (feed) => {
       const item = document.createElement('li');
