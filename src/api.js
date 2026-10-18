@@ -6,6 +6,7 @@ const fetchRss = (url) => axios
       url,
       disableCache: true,
     },
+    responseType: 'text',
   })
   .then((response) => {
     let data = response.data;
